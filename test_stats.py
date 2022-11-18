@@ -9,7 +9,6 @@ from os.path import basename, dirname, realpath
 from time import time
 
 
-
 class Dump:
     def __init__(self, path):
         self.path = path
@@ -50,24 +49,30 @@ def run_stats(dump, count, output_dir='.'):
     output_chunks = "{0}/chunks_{1}.csv".format(realpath(output_dir), basename(dump.path))
     URLs = dump.random_lines(count)
     ctx = gfal2.creat_context()
-    data = { 'url': [], 'chunks': [] }
+    url_times = []
     chunk_start = time()
     chunk_res = 0
-    for url in URLs:
+    print("Starting stats for {0} at {1}".format(dump.path, time()))
+    for idx, url in enumerate(URLs):
+        url = url.strip()
         url_start = time() 
         try:
             stat_res = ctx.stat(url)
-        except gfal2.GError:
+        except gfal2.GError as e:
+            print("Exception while stat {0}: {1}".format(url, e))
             res = 1
         else:
             res = 0 
         finally:
             url_end = time()
-            data['url'].append( (url_start, url_end-url_start, res) )
+            url_times.append( (url_start, url_end-url_start, res) )
             chunk_res = max(chunk_res, res)
-    data['chunks'].append( (chunk_start, url_end - chunk_start, chunk_res) )
+        if (idx+1) % 50 == 0:
+            print("{0} urls processed".format(idx+1))
+    chunk_time = url_end - chunk_start
+    print("Chunk processed in {0}".format(chunk_time))
 
-    for fname, res in ( (output_urls, data['url']), (output_chunks, data['chunks']) ):
+    for fname, res in ( (output_urls, url_times), (output_chunks, [(chunk_start, chunk_time, chunk_res)]) ):
         with open(fname, 'a') as fd:
             for tup in res:
                 print("{0},{1},{2}".format(tup[0],tup[1],tup[2]), file=fd)
