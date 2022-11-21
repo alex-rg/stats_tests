@@ -83,7 +83,7 @@ def run_dirac_checks(dump, prefix, count, se, output_dir='.'):
     URLs = [u.replace(prefix, '', 1) for u in  dump.random_lines(count)]
     replicas = {}
     for url in URLs:
-        replicase[url] = [se]
+        replicas[url] = [se]
 
     from LHCbDIRAC.DataManagementSystem.Client.DataIntegrityClient import DataIntegrityClient
     client = DataIntegrityClient()
