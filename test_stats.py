@@ -91,10 +91,12 @@ def run_dirac_checks(dump, prefix, count, se, output_dir='.'):
     print("Starting stats for {0} at {1}".format(dump.path, time()))
     chunk_start = time()
     res = client.checkPhysicalFiles(replicas=replicas, catalogMetadata={})
-    chunk_end = time()
+    exec_time = time() - chunk_start
+    
+    print("Execution took {0}".format(exec_time))
 
     with open(output_file, 'a') as fd:
-        print( "{0},{1},{2}".format(chunk_start, chunk_end - chunk_start, 0 if res['OK'] else 1) )
+        print( "{0},{1},{2}".format(chunk_start, exec_time, 0 if res['OK'] else 1) , file=fd)
 
 
 def parse_args():
