@@ -44,7 +44,19 @@ class Dump:
         return res
 
 
-def run_stats(dump, count, output_dir='.'):
+def run_stats(dump, count, output_dir='.', check_type='stat'):
+    do_stat = lambda ctx, url: ctx.stat(url)
+    do_cksum = lambda ctx, url: ctx.getxattr(url, 'xroot.cksum')
+
+    if check_type == 'stat':
+        check_func = do_stat
+    elif check_type == 'csum':
+        check_func = do_cksum
+    elif check_type == 'both':
+        check_func = lambda ctx,url: (do_stat(ctx, url), do_cksum(ctx, url))
+    else:
+        raise ValueError("Wrong check type: shoud be either 'stat', 'csum' or 'both'.")
+
     output_urls = "{0}/urls_{1}.csv".format(realpath(output_dir), basename(dump.path))
     output_chunks = "{0}/chunks_{1}.csv".format(realpath(output_dir), basename(dump.path))
     URLs = dump.random_lines(count)
@@ -57,7 +69,7 @@ def run_stats(dump, count, output_dir='.'):
         url = url.strip()
         url_start = time() 
         try:
-            stat_res = ctx.stat(url)
+            test_res = check_func(ctx, url)
         except gfal2.GError as e:
             print("Exception while stat {0}: {1}".format(url, e))
             res = 1
@@ -104,6 +116,7 @@ def parse_args():
     parser.add_argument("-c", "--count", help="Number of files to stat. Must not be less then number of lines in a dump", type=int)
     parser.add_argument("-d", "--dumps", help="Comma-separated list of files with URLs for stats. No commas in filenames, please")
     parser.add_argument("-o", "--output_dir", help="Dir where results should be stored")
+    parser.add_argument("-t", "--check_type", help="Check type. Either 'stat' (e.g. do only stats), 'cksum' (only cksums) or 'both' (both of the above). Default is 'stat'.", default='stat')
     parser.add_argument("-D", "--DIRAC", help="Run DIRAC-specific checks", action='store_true')
     parser.add_argument("-S", "--SE", help="Dirac SE. Required only for DIRAC-specific tests", default=None)
     parser.add_argument("-p", "--prefix", help="Prefix to remove from PFN to get LFN. Required only for DIRAC-Specific tests", default=None)
@@ -125,4 +138,4 @@ if __name__ == '__main__':
         if args.DIRAC:
             run_dirac_checks(dump, args.prefix, args.count, args.SE)
         else:
-            run_stats(dump, args.count, output_dir=args.output_dir)
+            run_stats(dump, args.count, output_dir=args.output_dir, check_type=args.check_type)
