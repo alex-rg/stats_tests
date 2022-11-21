@@ -100,8 +100,14 @@ def parse_args():
     parser.add_argument("-d", "--dumps", help="Comma-separated list of files with URLs for stats. No commas in filenames, please")
     parser.add_argument("-o", "--output_dir", help="Dir where results should be stored")
     parser.add_argument("-D", "--DIRAC", help="Run DIRAC-specific checks", action='store_true')
-    parser.add_argument("-S", "--SE", help="Dirac SE. Required only for DIRAC-specific tests", action='store_true')
-    return parser.parse_args()
+    parser.add_argument("-S", "--SE", help="Dirac SE. Required only for DIRAC-specific tests", default=None)
+    parser.add_argument("-p", "--prefix", help="Prefix to remove from PFN to get LFN. Required only for DIRAC-Specific tests", default=None)
+    args = parser.parse_args()
+    if args.DIRAC and (args.SE is None or args.prefix is None):
+        raise ValueError("For DIRAC-specific tests SE and prefix must be given.")
+    elif not args.dirac and (args.SE is not None or args.prefix is not None):
+        raise ValueError("For non DIRAC-specific tests SE and prefix must not be given.")
+    return args
 
 
 if __name__ == '__main__':
@@ -111,4 +117,7 @@ if __name__ == '__main__':
         Dumps.append(Dump(fname))
 
     for dump in Dumps:
-        run_stats(dump, args.count, output_dir=args.output_dir)
+        if args.DIRAC:
+            run_dirac_checks(dump, args.prefix, args.count, args.SE)
+        else:
+            run_stats(dump, args.count, output_dir=args.output_dir)
