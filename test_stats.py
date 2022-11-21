@@ -105,7 +105,7 @@ def parse_args():
     args = parser.parse_args()
     if args.DIRAC and (args.SE is None or args.prefix is None):
         raise ValueError("For DIRAC-specific tests SE and prefix must be given.")
-    elif not args.dirac and (args.SE is not None or args.prefix is not None):
+    elif not args.DIRAC and (args.SE is not None or args.prefix is not None):
         raise ValueError("For non DIRAC-specific tests SE and prefix must not be given.")
     return args
 
