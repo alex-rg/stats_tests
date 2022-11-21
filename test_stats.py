@@ -50,9 +50,9 @@ def run_stats(dump, count, output_dir='.'):
     URLs = dump.random_lines(count)
     ctx = gfal2.creat_context()
     url_times = []
-    chunk_start = time()
     chunk_res = 0
     print("Starting stats for {0} at {1}".format(dump.path, time()))
+    chunk_start = time()
     for idx, url in enumerate(URLs):
         url = url.strip()
         url_start = time() 
