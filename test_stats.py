@@ -81,6 +81,9 @@ def run_stats(dump, count, output_dir='.'):
 def run_dirac_checks(dump, prefix, count, se, output_dir='.'):
     output_file = "{0}/chunks_{1}.csv".format(realpath(output_dir), basename(dump.path))
     URLs = [u.replace(prefix, '', 1) for u in  dump.random_lines(count)]
+    replicas = {}
+    for url in URLs:
+        replicase[url] = [se]
 
     from LHCbDIRAC.DataManagementSystem.Client.DataIntegrityClient import DataIntegrityClient
     client = DataIntegrityClient()
