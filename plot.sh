@@ -11,11 +11,12 @@ for site in $* ; do
 done
 #echo "$plot_args"
 
-cat <<EOF
+cat <<EOF | gnuplot
 set datafile separator ","
-set output 'plot.png'
+set terminal png size 1000,800
 set xdata time
 set timefmt "%s"
-set format x "%H:%M %d/%m"
+set format x "%H:%M\n%d/%m"
+set output 'plot.png'
 plot $plot_args
 EOF
