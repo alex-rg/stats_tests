@@ -78,7 +78,7 @@ def run_stats(dump, count, output_dir='.'):
                 print("{0},{1},{2}".format(tup[0],tup[1],tup[2]), file=fd)
 
 
-def run_dirac_checks(dump, prefix, count, se):
+def run_dirac_checks(dump, prefix, count, se, output_dir='.'):
     output_file = "{0}/chunks_{1}.csv".format(realpath(output_dir), basename(dump.path))
     URLs = [u.replace(prefix, '', 1) for u in  dump.random_lines(count)]
 
