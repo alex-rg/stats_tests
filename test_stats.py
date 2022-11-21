@@ -78,11 +78,29 @@ def run_stats(dump, count, output_dir='.'):
                 print("{0},{1},{2}".format(tup[0],tup[1],tup[2]), file=fd)
 
 
+def run_dirac_checks(dump, prefix, count, se):
+    output_file = "{0}/chunks_{1}.csv".format(realpath(output_dir), basename(dump.path))
+    URLs = [u.replace(prefix, '', 1) for u in  dump.random_lines(count)]
+
+    from LHCbDIRAC.DataManagementSystem.Client.DataIntegrityClient import DataIntegrityClient
+    client = DataIntegrityClient()
+
+    print("Starting stats for {0} at {1}".format(dump.path, time()))
+    chunk_start = time()
+    res = client.checkPhysicalFiles(replicas=replicas, catalogMetadata={})
+    chunk_end = time()
+
+    with open(output_file, 'a') as fd:
+        print( "{0},{1},{2}".format(chunk_start, chunk_end - chunk_start, 0 if res['OK'] else 1) )
+
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--count", help="Number of files to stat. Must not be less then number of lines in a dump", type=int)
     parser.add_argument("-d", "--dumps", help="Comma-separated list of files with URLs for stats. No commas in filenames, please")
     parser.add_argument("-o", "--output_dir", help="Dir where results should be stored")
+    parser.add_argument("-D", "--DIRAC", help="Run DIRAC-specific checks", action='store_true')
+    parser.add_argument("-S", "--SE", help="Dirac SE. Required only for DIRAC-specific tests", action='store_true')
     return parser.parse_args()
 
 
