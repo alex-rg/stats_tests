@@ -1,5 +1,5 @@
-#!/usr/bin/env python2
-from __future__ import print_function
+#!/usr/bin/env python
+#from __future__ import print_function
 
 import argparse
 import gfal2
@@ -46,7 +46,7 @@ class Dump:
 
 def run_stats(dump, count, output_dir='.', check_type='stat'):
     do_stat = lambda ctx, url: ctx.stat(url)
-    do_cksum = lambda ctx, url: ctx.getxattr(url, 'xroot.cksum')
+    do_cksum = lambda ctx, url: ctx.checksum(url, 'adler32')
 
     if check_type == 'stat':
         check_func = do_stat
@@ -75,19 +75,26 @@ def run_stats(dump, count, output_dir='.', check_type='stat'):
             res = 1
         else:
             res = 0 
+            if (idx+1) % 100 == 0:
+                if check_type == 'both':
+                    print(test_res[0].st_size, test_res[1])
+                elif check_type == 'stat':
+                    print(test_res.st_size)
+                elif check_type == 'csum':
+                    print(test_res)
         finally:
             url_end = time()
-            url_times.append( (url_start, url_end-url_start, res) )
+            url_times.append( (url_start, url_end-url_start, res, url) )
             chunk_res = max(chunk_res, res)
         if (idx+1) % 50 == 0:
             print("{0} urls processed".format(idx+1))
     chunk_time = url_end - chunk_start
     print("Chunk processed in {0}".format(chunk_time))
 
-    for fname, res in ( (output_urls, url_times), (output_chunks, [(chunk_start, chunk_time, chunk_res)]) ):
+    for fname, res in ( (output_urls, url_times), (output_chunks, [(chunk_start, chunk_time, chunk_res, 0)]) ):
         with open(fname, 'a') as fd:
             for tup in res:
-                print("{0},{1},{2}".format(tup[0],tup[1],tup[2]), file=fd)
+                print("{0},{1},{2},{3}".format(tup[0],tup[1],tup[2],tup[3]), file=fd)
 
 
 def run_dirac_checks(dump, prefix, count, se, output_dir='.'):
@@ -95,7 +102,7 @@ def run_dirac_checks(dump, prefix, count, se, output_dir='.'):
     URLs = [u.replace(prefix, '', 1) for u in  dump.random_lines(count)]
     replicas = {}
     for url in URLs:
-        replicas[url] = [se]
+        replicas[url.strip()] = [se]
 
     from LHCbDIRAC.DataManagementSystem.Client.DataIntegrityClient import DataIntegrityClient
     client = DataIntegrityClient()
